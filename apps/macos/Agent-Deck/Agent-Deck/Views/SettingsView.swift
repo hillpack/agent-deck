@@ -365,7 +365,7 @@ struct SettingsView: View {
         do {
             // Get config file path
             let configDirectory = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".agent-deck")
+                .appendingPathComponent(".agentdeck")
             let configFile = configDirectory.appendingPathComponent("config.yaml")
 
             // Encode to YAML

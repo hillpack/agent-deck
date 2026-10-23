@@ -18,14 +18,14 @@ class ConfigManager {
     private let defaultConfigResource = "default-config"
 
     private init() {
-        // Configuration directory: ~/.agent-deck/
+        // Configuration directory: ~/.agentdeck/
         configDirectory = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".agent-deck")
+            .appendingPathComponent(".agentdeck")
 
         configFile = configDirectory.appendingPathComponent("config.yaml")
     }
 
-    /// Load configuration from ~/.agent-deck/config.yaml
+    /// Load configuration from ~/.agentdeck/config.yaml
     /// Creates default config if file doesn't exist
     func loadConfiguration() throws -> Configuration {
         Logger.info("Loading configuration from \(configFile.path)", log: Logger.config)
@@ -122,7 +122,7 @@ class ConfigManager {
             case .invalidConfiguration:
                 return "Configuration validation failed. Check port range and regex patterns."
             case .fileNotFound:
-                return "Configuration file not found at ~/.agent-deck/config.yaml"
+                return "Configuration file not found at ~/.agentdeck/config.yaml"
             case .parseError:
                 return "Failed to parse YAML configuration file"
             }

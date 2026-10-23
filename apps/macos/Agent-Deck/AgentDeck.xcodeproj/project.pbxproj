@@ -30,18 +30,18 @@
 
 /* Begin PBXFileReference section */
 		29B52E782EB7B860004C00D1 /* default-config.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = "default-config.yaml"; sourceTree = "<group>"; };
-		29BA55F62EB7906400D8E575 /* AgentDeckTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AgentDeckTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		29BA56032EB7906600D8E575 /* Agent-DeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-DeckTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		29BA560D2EB7906600D8E575 /* Agent-DeckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Agent-DeckUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		29BA55F62EB7906400D8E575 /* AgentDeck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AgentDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		29BA56032EB7906600D8E575 /* AgentDeckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		29BA560D2EB7906600D8E575 /* AgentDeckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgentDeckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		29BA56212EB794FA00D8E575 /* Exceptions for "Agent-Deck" folder in "AgentDeckTest" target */ = {
+		29BA56212EB794FA00D8E575 /* Exceptions for "Agent-Deck" folder in "AgentDeck" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 29BA55F52EB7906400D8E575 /* AgentDeckTest */;
+			target = 29BA55F52EB7906400D8E575 /* AgentDeck */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -49,7 +49,7 @@
 		29BA55F82EB7906400D8E575 /* Agent-Deck */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				29BA56212EB794FA00D8E575 /* Exceptions for "Agent-Deck" folder in "AgentDeckTest" target */,
+				29BA56212EB794FA00D8E575 /* Exceptions for "Agent-Deck" folder in "AgentDeck" target */,
 			);
 			path = "Agent-Deck";
 			sourceTree = "<group>";
@@ -138,9 +138,9 @@
 		29BA55F72EB7906400D8E575 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				29BA55F62EB7906400D8E575 /* AgentDeckTest.app */,
-				29BA56032EB7906600D8E575 /* Agent-DeckTests.xctest */,
-				29BA560D2EB7906600D8E575 /* Agent-DeckUITests.xctest */,
+				29BA55F62EB7906400D8E575 /* AgentDeck.app */,
+				29BA56032EB7906600D8E575 /* AgentDeckTests.xctest */,
+				29BA560D2EB7906600D8E575 /* AgentDeckUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -148,9 +148,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		29BA55F52EB7906400D8E575 /* AgentDeckTest */ = {
+		29BA55F52EB7906400D8E575 /* AgentDeck */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 29BA56172EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeckTest" */;
+			buildConfigurationList = 29BA56172EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeck" */;
 			buildPhases = (
 				29BA55F22EB7906400D8E575 /* Sources */,
 				29BA55F32EB7906400D8E575 /* Frameworks */,
@@ -163,17 +163,17 @@
 			fileSystemSynchronizedGroups = (
 				29BA55F82EB7906400D8E575 /* Agent-Deck */,
 			);
-			name = AgentDeckTest;
+			name = AgentDeck;
 			packageProductDependencies = (
 				2915B1492EB7B0070011ED0D /* Yams */,
 			);
 			productName = "Agent-Deck";
-			productReference = 29BA55F62EB7906400D8E575 /* AgentDeckTest.app */;
+			productReference = 29BA55F62EB7906400D8E575 /* AgentDeck.app */;
 			productType = "com.apple.product-type.application";
 		};
-		29BA56022EB7906600D8E575 /* Agent-DeckTests */ = {
+		29BA56022EB7906600D8E575 /* AgentDeckTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 29BA561A2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "Agent-DeckTests" */;
+			buildConfigurationList = 29BA561A2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeckTests" */;
 			buildPhases = (
 				29BA55FF2EB7906600D8E575 /* Sources */,
 				29BA56002EB7906600D8E575 /* Frameworks */,
@@ -187,16 +187,16 @@
 			fileSystemSynchronizedGroups = (
 				29BA56062EB7906600D8E575 /* Agent-DeckTests */,
 			);
-			name = "Agent-DeckTests";
+			name = AgentDeckTests;
 			packageProductDependencies = (
 			);
 			productName = "Agent-DeckTests";
-			productReference = 29BA56032EB7906600D8E575 /* Agent-DeckTests.xctest */;
+			productReference = 29BA56032EB7906600D8E575 /* AgentDeckTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		29BA560C2EB7906600D8E575 /* Agent-DeckUITests */ = {
+		29BA560C2EB7906600D8E575 /* AgentDeckUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 29BA561D2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "Agent-DeckUITests" */;
+			buildConfigurationList = 29BA561D2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeckUITests" */;
 			buildPhases = (
 				29BA56092EB7906600D8E575 /* Sources */,
 				29BA560A2EB7906600D8E575 /* Frameworks */,
@@ -210,11 +210,11 @@
 			fileSystemSynchronizedGroups = (
 				29BA56102EB7906600D8E575 /* Agent-DeckUITests */,
 			);
-			name = "Agent-DeckUITests";
+			name = AgentDeckUITests;
 			packageProductDependencies = (
 			);
 			productName = "Agent-DeckUITests";
-			productReference = 29BA560D2EB7906600D8E575 /* Agent-DeckUITests.xctest */;
+			productReference = 29BA560D2EB7906600D8E575 /* AgentDeckUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -240,7 +240,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 29BA55F12EB7906400D8E575 /* Build configuration list for PBXProject "Agent-Deck" */;
+			buildConfigurationList = 29BA55F12EB7906400D8E575 /* Build configuration list for PBXProject "AgentDeck" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -257,9 +257,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				29BA55F52EB7906400D8E575 /* AgentDeckTest */,
-				29BA56022EB7906600D8E575 /* Agent-DeckTests */,
-				29BA560C2EB7906600D8E575 /* Agent-DeckUITests */,
+				29BA55F52EB7906400D8E575 /* AgentDeck */,
+				29BA56022EB7906600D8E575 /* AgentDeckTests */,
+				29BA560C2EB7906600D8E575 /* AgentDeckUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -316,12 +316,12 @@
 /* Begin PBXTargetDependency section */
 		29BA56052EB7906600D8E575 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 29BA55F52EB7906400D8E575 /* AgentDeckTest */;
+			target = 29BA55F52EB7906400D8E575 /* AgentDeck */;
 			targetProxy = 29BA56042EB7906600D8E575 /* PBXContainerItemProxy */;
 		};
 		29BA560F2EB7906600D8E575 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 29BA55F52EB7906400D8E575 /* AgentDeckTest */;
+			target = 29BA55F52EB7906400D8E575 /* AgentDeck */;
 			targetProxy = 29BA560E2EB7906600D8E575 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -463,15 +463,15 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Agent-Deck/Info.plist";
-				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_LSUIElement = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.TheHillPack.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.TheHillPack.AgentDeck;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -499,15 +499,15 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Agent-Deck/Info.plist";
-				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_LSUIElement = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.TheHillPack.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.TheHillPack.AgentDeck;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -536,7 +536,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent-Deck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Agent-Deck";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AgentDeck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AgentDeck";
 			};
 			name = Debug;
 		};
@@ -557,7 +557,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Agent-Deck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Agent-Deck";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AgentDeck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AgentDeck";
 			};
 			name = Release;
 		};
@@ -602,7 +602,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		29BA55F12EB7906400D8E575 /* Build configuration list for PBXProject "Agent-Deck" */ = {
+		29BA55F12EB7906400D8E575 /* Build configuration list for PBXProject "AgentDeck" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				29BA56152EB7906600D8E575 /* Debug */,
@@ -611,7 +611,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		29BA56172EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeckTest" */ = {
+		29BA56172EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeck" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				29BA56182EB7906600D8E575 /* Debug */,
@@ -620,7 +620,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		29BA561A2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "Agent-DeckTests" */ = {
+		29BA561A2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeckTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				29BA561B2EB7906600D8E575 /* Debug */,
@@ -629,7 +629,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		29BA561D2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "Agent-DeckUITests" */ = {
+		29BA561D2EB7906600D8E575 /* Build configuration list for PBXNativeTarget "AgentDeckUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				29BA561E2EB7906600D8E575 /* Debug */,

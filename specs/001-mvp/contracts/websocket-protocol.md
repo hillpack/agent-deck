@@ -54,28 +54,48 @@ All messages are JSON objects sent as WebSocket text frames.
 
 ## Server → Client Messages
 
-### 1. Initial State (on connect)
+### 1. Connected (handshake acknowledgment)
 
-**Type**: `initial_state`
+**Type**: `connected`
 **When**: Immediately after WebSocket handshake
+**Purpose**: Acknowledge connection and provide server metadata
+
+```json
+{
+  "type": "connected",
+  "serverVersion": "1.0.0"
+}
+```
+
+**Fields**:
+- `serverVersion`: Mac app version string
+- `customActions`: (Optional, Phase 5+) Array of available custom actions
+
+**Note**: Server immediately follows with an `update` message containing current instances.
+
+---
+
+### 2. Initial State (on connect)
+
+**Type**: `update`
+**When**: Immediately after `connected` message
 **Purpose**: Send full current state to newly connected client
 
 ```json
 {
-  "type": "initial_state",
-  "timestamp": "2025-01-02T14:30:00Z",
+  "type": "update",
   "instances": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "pid": 12345,
       "agentType": "claude-code",
-      "workingDirectory": "/Users/dev/project",
+      "cwd": "/Users/dev/project",
       "status": "working",
       "currentTask": "Implementing authentication tests",
-      "lastActivityTimestamp": "2025-01-02T14:29:55Z",
-      "modelName": "claude-sonnet-4-5-20250929",
+      "lastActivity": "2025-01-02T14:29:55Z",
+      "model": "claude-sonnet-4-5-20250929",
       "gitBranch": "001-mvp",
-      "activeSubagents": [
+      "subagents": [
         {
           "agentId": "subagent-001",
           "type": "Explore",
@@ -95,75 +115,75 @@ All messages are JSON objects sent as WebSocket text frames.
           "status": "in_progress",
           "activeForm": "Writing authentication tests"
         }
-      ],
-      "currentTaskDescription": "Writing authentication tests"
+      ]
     }
-  ],
-  "serverVersion": "1.0.0"
+  ]
 }
 ```
 
 **Fields**:
-- `instances`: Array of all current AgentInstance objects
-- `serverVersion`: Mac app version string
+- `instances`: Array of all current AgentInstance objects (see data-model.md for full schema)
 
 ---
 
-### 2. Status Update
+### 3. Status Update (broadcast)
 
 **Type**: `update`
-**When**: Any AgentInstance status or currentTask changes
+**When**: Any AgentInstance status or field changes
 **Purpose**: Real-time status synchronization (FR-007, FR-014)
+
+**Note**: Same message type as initial state, but can contain full or partial instances array.
 
 ```json
 {
   "type": "update",
-  "timestamp": "2025-01-02T14:30:15Z",
-  "instanceId": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "working",
-  "currentTask": "Writing unit tests",
-  "modelName": "claude-sonnet-4-5-20250929",
-  "gitBranch": "001-mvp",
-  "activeSubagents": [
+  "instances": [
     {
-      "agentId": "subagent-002",
-      "type": "general-purpose",
-      "description": "Implementing test fixtures"
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "pid": 12345,
+      "agentType": "claude-code",
+      "cwd": "/Users/dev/project",
+      "status": "working",
+      "currentTask": "Writing unit tests",
+      "lastActivity": "2025-01-02T14:30:15Z",
+      "model": "claude-sonnet-4-5-20250929",
+      "gitBranch": "001-mvp",
+      "windowId": "12345",
+      "subagents": [
+        {
+          "agentId": "subagent-002",
+          "type": "general-purpose",
+          "description": "Implementing test fixtures"
+        }
+      ],
+      "todos": [
+        {
+          "id": "todo-1",
+          "content": "Create auth service",
+          "status": "completed",
+          "activeForm": "Creating auth service"
+        },
+        {
+          "id": "todo-2",
+          "content": "Write authentication tests",
+          "status": "in_progress",
+          "activeForm": "Writing authentication tests"
+        },
+        {
+          "id": "todo-3",
+          "content": "Run test suite",
+          "status": "pending",
+          "activeForm": "Running test suite"
+        }
+      ]
     }
-  ],
-  "todos": [
-    {
-      "id": "todo-1",
-      "content": "Create auth service",
-      "status": "completed",
-      "activeForm": "Creating auth service"
-    },
-    {
-      "id": "todo-2",
-      "content": "Write authentication tests",
-      "status": "in_progress",
-      "activeForm": "Writing authentication tests"
-    },
-    {
-      "id": "todo-3",
-      "content": "Run test suite",
-      "status": "pending",
-      "activeForm": "Running test suite"
-    }
-  ],
-  "currentTaskDescription": "Writing authentication tests"
+  ]
 }
 ```
 
 **Fields**:
-- `instanceId`: UUID of affected AgentInstance
-- `status`: New AgentStatus value ("idle" | "working" | "done" | "error")
-- `currentTask`: Optional task description (nullable)
-- `modelName`: AI model name (nullable)
-- `gitBranch`: Current git branch (nullable)
-- `activeSubagents`: Array of SubagentInfo objects (nullable)
-- `todos`: Array of TodoItem objects (nullable)
-- `currentTaskDescription`: Detailed task description from activeForm (nullable)
+- `instances`: Array of AgentInstance objects with updated data
+- All AgentInstance fields match shared-types/src/agent.ts interface
 
 **Latency Requirement**: Must be delivered within 500ms of status change (SC-001)
 

@@ -144,11 +144,12 @@ class TranscriptParser {
                    let input = item["input"] as? [String: Any] {
 
                     let description = input["description"] as? String ?? "Unknown task"
+                    let subagentType = input["subagent_type"] as? String ?? "general-purpose"
 
                     let subagent = SubagentInfo(
-                        description: description,
-                        status: "running",
-                        startedAt: Date()
+                        agentId: toolUseId,
+                        type: subagentType,
+                        description: description
                     )
 
                     toolUseBlocks[toolUseId] = subagent

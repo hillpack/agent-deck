@@ -252,9 +252,9 @@ struct AgentInstanceCard: View {
     // MARK: - Tap Handler
 
     private func handleTap() {
-        NSLog("🖱️ Menubar card tapped for PID \(instance.pid)")
+        NSLog("🖱️ Menubar card tapped for PID \(instance.pid), cwd: \(instance.workingDirectory)")
 
-        let result = windowManager.focusWindow(pid: instance.pid)
+        let result = windowManager.focusWindow(pid: instance.pid, cwd: instance.workingDirectory)
 
         switch result {
         case .success:

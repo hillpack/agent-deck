@@ -13,8 +13,11 @@ import Combine
 
 /// WebSocket server managing connections from mobile PWA clients
 class WebSocketServer: ObservableObject {
-    /// List of active WebSocket connections
+    /// List of active WebSocket connections (after handshake)
     @Published var connections: [WebSocketConnection] = []
+
+    /// Pending connections during handshake (must retain to prevent deallocation)
+    private var pendingConnections: [NWConnection] = []
 
     /// Network listener
     private var listener: NWListener?
@@ -48,7 +51,28 @@ class WebSocketServer: ObservableObject {
         }
 
         listener.newConnectionHandler = { [weak self] connection in
-            self?.handleNewConnection(connection)
+            // CRITICAL: Must retain connection IMMEDIATELY to prevent release
+            guard let self = self else {
+                NSLog("❌ WebSocketServer: self is nil in newConnectionHandler")
+                return
+            }
+            // Store and start connection synchronously in the handler
+            self.pendingConnections.append(connection)
+            NSLog("🔌 New connection received (now \(self.pendingConnections.count) pending)")
+
+            // Create a dedicated queue for this connection
+            let connectionQueue = DispatchQueue(label: "com.agentdeck.ws.connection")
+
+            // Set up state handler before starting
+            connection.stateUpdateHandler = { [weak self] state in
+                DispatchQueue.main.async {
+                    self?.handleConnectionState(connection, state: state)
+                }
+            }
+
+            // Start connection immediately - this "accepts" the server connection
+            connection.start(queue: connectionQueue)
+            NSLog("🔌 Connection started on dedicated queue")
         }
 
         listener.stateUpdateHandler = { [weak self] state in
@@ -76,48 +100,103 @@ class WebSocketServer: ObservableObject {
     /// Stop WebSocket server
     func stop() {
         listener?.cancel()
+        // Cancel all pending connections
+        for connection in pendingConnections {
+            connection.cancel()
+        }
+        pendingConnections.removeAll()
         connections.removeAll()
         Logger.info("WebSocket server stopped", log: Logger.network)
     }
 
-    /// Handle new connection
+    /// Setup connection handlers and start the connection
+    /// Called after connection is already stored in pendingConnections
     /// Task: T025 - WebSocket handshake
-    private func handleNewConnection(_ nwConnection: NWConnection) {
-        nwConnection.start(queue: .main)
-
+    private func setupConnectionHandlers(_ nwConnection: NWConnection) {
         nwConnection.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
+                NSLog("🔌 Connection ready, starting handshake")
                 self?.performWebSocketHandshake(nwConnection)
             case .failed(let error):
+                NSLog("❌ Connection failed: \(error.localizedDescription)")
                 Logger.error("Connection failed: \(error.localizedDescription)", log: Logger.network)
+                self?.removePendingConnection(nwConnection)
             case .cancelled:
+                NSLog("🔌 Connection cancelled")
+                self?.removePendingConnection(nwConnection)
                 self?.removeConnection(nwConnection)
             default:
                 break
             }
+        }
+
+        // Start connection AFTER setting up handlers
+        // Use global queue to avoid potential deadlock on main queue
+        let connectionQueue = DispatchQueue(label: "com.agentdeck.connection.\(UUID().uuidString)")
+        nwConnection.start(queue: connectionQueue)
+    }
+
+    /// Remove connection from pending list
+    private func removePendingConnection(_ connection: NWConnection) {
+        pendingConnections.removeAll { $0 === connection }
+    }
+
+    /// Handle connection state changes
+    /// Called from stateUpdateHandler on main queue
+    private func handleConnectionState(_ connection: NWConnection, state: NWConnection.State) {
+        switch state {
+        case .setup:
+            NSLog("🔌 Connection state: setup")
+        case .preparing:
+            NSLog("🔌 Connection state: preparing")
+        case .ready:
+            NSLog("🔌 Connection state: READY - starting handshake")
+            performWebSocketHandshake(connection)
+        case .failed(let error):
+            NSLog("❌ Connection state: FAILED - \(error.localizedDescription)")
+            Logger.error("Connection failed: \(error.localizedDescription)", log: Logger.network)
+            removePendingConnection(connection)
+        case .cancelled:
+            NSLog("🔌 Connection state: CANCELLED")
+            removePendingConnection(connection)
+            removeConnection(connection)
+        case .waiting(let error):
+            NSLog("⏳ Connection state: waiting - \(error.localizedDescription)")
+        @unknown default:
+            NSLog("❓ Connection state: unknown")
         }
     }
 
     /// Perform WebSocket handshake
     /// Task: T025 - implement WebSocket handshake per RFC 6455
     private func performWebSocketHandshake(_ connection: NWConnection) {
+        NSLog("🔌 performWebSocketHandshake called, requesting data...")
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, _, error in
+            NSLog("🔌 Handshake receive callback triggered")
             if let error = error {
+                NSLog("❌ Handshake receive error: \(error.localizedDescription)")
                 Logger.error("Handshake receive error: \(error.localizedDescription)", log: Logger.network)
+                self?.removePendingConnection(connection)
                 return
             }
 
             guard let data = data, let request = String(data: data, encoding: .utf8) else {
+                NSLog("❌ Invalid handshake data - no data or not UTF-8")
                 Logger.error("Invalid handshake data", log: Logger.network)
+                self?.removePendingConnection(connection)
                 return
             }
+            NSLog("🔌 Received handshake request (\(data.count) bytes)")
 
             // Parse WebSocket key from request
             guard let wsKey = self?.extractWebSocketKey(from: request) else {
+                NSLog("❌ Missing Sec-WebSocket-Key in request: \(request.prefix(200))")
                 Logger.error("Missing Sec-WebSocket-Key in handshake", log: Logger.network)
+                self?.removePendingConnection(connection)
                 return
             }
+            NSLog("🔌 Found WebSocket key: \(wsKey)")
 
             // Generate accept key (RFC 6455)
             let acceptKey = self?.generateAcceptKey(from: wsKey) ?? ""
@@ -167,6 +246,10 @@ class WebSocketServer: ObservableObject {
     /// Complete connection after handshake
     /// Task: T026 - send initial_state on connect
     private func completeConnection(_ nwConnection: NWConnection) {
+        // Move from pending to active connections
+        removePendingConnection(nwConnection)
+        NSLog("🔌 Handshake complete, promoting to active connection")
+
         let wsConnection = WebSocketConnection(
             id: UUID(),
             connection: nwConnection,
@@ -184,30 +267,40 @@ class WebSocketServer: ObservableObject {
         Logger.info("Client connected: \(wsConnection.id)", log: Logger.network)
     }
 
-    /// Send initial_state message to newly connected client
+    /// Send connected message to newly connected client
+    /// Matches TypeScript shared-types/src/websocket.ts ConnectedMessage
     /// Task: T026 - broadcast initial state
     private func sendInitialState(to connection: WebSocketConnection) {
-        guard let instances = processMonitor?.instances else { return }
-
         let message: [String: Any] = [
-            "type": "initial_state",
-            "timestamp": ISO8601DateFormatter().string(from: Date()),
-            "instances": instances.map { $0.toDictionary() },
+            "type": "connected",  // TypeScript expects "connected", not "initial_state"
             "serverVersion": "1.0.0"
+            // TODO Phase 5: Add customActions array when implemented
         ]
 
         sendMessage(message, to: connection)
+
+        // Follow up immediately with current state
+        guard let instances = processMonitor?.instances else { return }
+
+        let stateMessage: [String: Any] = [
+            "type": "update",
+            "instances": instances.map { $0.toDictionary() }
+        ]
+
+        sendMessage(stateMessage, to: connection)
     }
 
     /// Broadcast update message to all connected clients
     /// Task: T027 - broadcast update on status change
+    /// Sends full instances array to match TypeScript StatusUpdateMessage type
     func broadcastUpdate(instance: AgentInstance) {
+        // Get all current instances and send full state
+        // This matches the format expected by mobile app (StatusUpdateMessage)
+        guard let instances = processMonitor?.instances else { return }
+
         let message: [String: Any] = [
             "type": "update",
-            "timestamp": ISO8601DateFormatter().string(from: Date()),
-            "instanceId": instance.id.uuidString,
-            "status": instance.status.rawValue,
-            "currentTask": instance.currentTask ?? NSNull()
+            "instances": instances.map { $0.toDictionary() }
         ]
 
         broadcast(message)
@@ -215,11 +308,14 @@ class WebSocketServer: ObservableObject {
 
     /// Broadcast instance_added message
     /// Task: T028 - broadcast instance_added
+    /// Now sends full instances array as 'update' message for mobile app compatibility
     func broadcastInstanceAdded(instance: AgentInstance) {
+        // Send full instances array - mobile app only handles 'update' type
+        guard let instances = processMonitor?.instances else { return }
+
         let message: [String: Any] = [
-            "type": "instance_added",
-            "timestamp": ISO8601DateFormatter().string(from: Date()),
-            "instance": instance.toDictionary()
+            "type": "update",
+            "instances": instances.map { $0.toDictionary() }
         ]
 
         broadcast(message)
@@ -227,12 +323,14 @@ class WebSocketServer: ObservableObject {
 
     /// Broadcast instance_removed message
     /// Task: T028 - broadcast instance_removed
+    /// Now sends full instances array as 'update' message for mobile app compatibility
     func broadcastInstanceRemoved(instanceId: UUID, reason: String = "process_terminated") {
+        // Send full instances array - mobile app only handles 'update' type
+        guard let instances = processMonitor?.instances else { return }
+
         let message: [String: Any] = [
-            "type": "instance_removed",
-            "timestamp": ISO8601DateFormatter().string(from: Date()),
-            "instanceId": instanceId.uuidString,
-            "reason": reason
+            "type": "update",
+            "instances": instances.map { $0.toDictionary() }
         ]
 
         broadcast(message)
@@ -426,7 +524,7 @@ class WebSocketServer: ObservableObject {
             return
         }
 
-        let result = windowManager.focusWindow(pid: instance.pid)
+        let result = windowManager.focusWindow(pid: instance.pid, cwd: instance.workingDirectory)
 
         // Tasks: T049-T050 - send success or failure within 1 second
         switch result {

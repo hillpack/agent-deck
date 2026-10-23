@@ -57,19 +57,21 @@ class WindowManager {
     /// Focus window for agent instance by PID
     /// Task: T042-T046 - window switching via NSRunningApplication + AppleScript
     ///
-    /// - Parameter pid: Process ID of the agent instance
+    /// - Parameters:
+    ///   - pid: Process ID of the agent instance
+    ///   - cwd: Optional working directory path (used to identify specific terminal window)
     /// - Returns: Result indicating success or failure with specific error
     ///
     /// Handles both GUI applications and CLI processes (running in Terminal)
     /// Requirement: SC-002 (<1s latency from mobile tap to window focus)
-    func focusWindow(pid: pid_t) -> Result<Void, WindowManagerError> {
+    func focusWindow(pid: pid_t, cwd: String? = nil) -> Result<Void, WindowManagerError> {
         // Task: T046 - check accessibility permissions
         if !checkAccessibilityPermissions() {
             Logger.error("Accessibility permissions not granted", log: Logger.general)
             return .failure(.accessibilityPermissionsRequired)
         }
 
-        Logger.info("Attempting to focus window for PID \(pid)", log: Logger.general)
+        Logger.info("Attempting to focus window for PID \(pid), cwd: \(cwd ?? "none")", log: Logger.general)
 
         // Check if this is a GUI application (in NSRunningApplication list)
         let runningApps = NSWorkspace.shared.runningApplications
@@ -88,15 +90,15 @@ class WindowManager {
             }
         } else {
             // Not a GUI app - likely a CLI process running in Terminal
-            NSLog("🔵 PID \(pid) is not a GUI app, attempting Terminal focus")
-            return focusTerminalForProcess(pid: pid)
+            NSLog("🔵 PID \(pid) is not a GUI app, attempting Terminal focus with cwd: \(cwd ?? "none")")
+            return focusTerminalForProcess(pid: pid, cwd: cwd)
         }
     }
 
     /// Focus Terminal window for a CLI process
     /// Used when the process is not a GUI application (e.g., `claude` in Terminal)
-    /// Identifies the SPECIFIC terminal running this process
-    private func focusTerminalForProcess(pid: pid_t) -> Result<Void, WindowManagerError> {
+    /// Identifies the SPECIFIC terminal window running this process by matching cwd in window title
+    private func focusTerminalForProcess(pid: pid_t, cwd: String? = nil) -> Result<Void, WindowManagerError> {
         NSLog("🔍 Searching for terminal emulator running PID \(pid)")
 
         // Walk up the process tree to find the terminal emulator
@@ -113,8 +115,19 @@ class WindowManager {
         let runningApps = NSWorkspace.shared.runningApplications
         if let terminal = runningApps.first(where: { $0.processIdentifier == terminalPID }) {
             let terminalName = terminal.localizedName ?? terminal.bundleIdentifier ?? "Unknown"
-            NSLog("🟢 Activating terminal: \(terminalName)")
+            let bundleId = terminal.bundleIdentifier ?? ""
+            NSLog("🟢 Found terminal: \(terminalName) (bundle: \(bundleId))")
 
+            // Try to focus specific window by cwd if available
+            if let cwd = cwd, !cwd.isEmpty {
+                let cwdResult = focusTerminalWindowByCwd(appName: terminalName, bundleId: bundleId, cwd: cwd)
+                if case .success = cwdResult {
+                    return cwdResult
+                }
+                NSLog("⚠️ Could not focus by cwd, falling back to app activation")
+            }
+
+            // Fallback: just activate the terminal app
             let success = terminal.activate(options: [.activateIgnoringOtherApps])
             if success {
                 NSLog("✅ Successfully activated terminal emulator")
@@ -128,6 +141,92 @@ class WindowManager {
         // Fallback: Try AppleScript
         NSLog("⚠️ Could not activate terminal via NSRunningApplication, trying AppleScript")
         return focusWindowViaAppleScript(pid: terminalPID)
+    }
+
+    /// Focus specific terminal window by matching cwd in window title
+    /// Uses AppleScript to find and raise the window whose title contains the working directory
+    private func focusTerminalWindowByCwd(appName: String, bundleId: String, cwd: String) -> Result<Void, WindowManagerError> {
+        // Extract directory name for matching (e.g., "agent-deck" from "/Users/foo/dev/agent-deck")
+        let dirName = (cwd as NSString).lastPathComponent
+        NSLog("🔍 Looking for window with '\(dirName)' in title (full cwd: \(cwd))")
+
+        // Build AppleScript to find and focus window by title
+        let script: String
+
+        switch bundleId {
+        case "com.mitchellh.ghostty":
+            // Ghostty: use System Events since Ghostty doesn't have native AppleScript support
+            script = """
+            tell application "Ghostty" to activate
+            tell application "System Events"
+                tell process "Ghostty"
+                    set windowList to every window
+                    repeat with w in windowList
+                        if name of w contains "\(dirName)" then
+                            perform action "AXRaise" of w
+                            return "focused"
+                        end if
+                    end repeat
+                end tell
+            end tell
+            return "not found"
+            """
+        case "com.apple.Terminal":
+            script = """
+            tell application "Terminal"
+                activate
+                set windowList to every window
+                repeat with w in windowList
+                    if name of w contains "\(dirName)" then
+                        set frontmost of w to true
+                        set index of w to 1
+                        return "focused"
+                    end if
+                end repeat
+            end tell
+            return "not found"
+            """
+        case "com.googlecode.iterm2":
+            script = """
+            tell application "iTerm"
+                activate
+                set windowList to every window
+                repeat with w in windowList
+                    if name of w contains "\(dirName)" then
+                        select w
+                        return "focused"
+                    end if
+                end repeat
+            end tell
+            return "not found"
+            """
+        default:
+            // Generic approach: just activate by app name
+            NSLog("⚠️ No specific handler for \(bundleId), using generic activation")
+            return .failure(.windowNotFound)
+        }
+
+        var error: NSDictionary?
+        if let scriptObject = NSAppleScript(source: script) {
+            let result = scriptObject.executeAndReturnError(&error)
+
+            if let error = error {
+                let errorMessage = error["NSAppleScriptErrorMessage"] as? String ?? "Unknown error"
+                NSLog("❌ AppleScript error: \(errorMessage)")
+                return .failure(.applescriptError(errorMessage))
+            }
+
+            let resultString = result.stringValue ?? ""
+            if resultString == "focused" {
+                NSLog("✅ Successfully focused window containing '\(dirName)'")
+                return .success(())
+            } else {
+                NSLog("⚠️ No window found containing '\(dirName)'")
+                return .failure(.windowNotFound)
+            }
+        }
+
+        return .failure(.applescriptError("Failed to create AppleScript"))
     }
 
     /// Walk up the process tree to find a terminal emulator or IDE

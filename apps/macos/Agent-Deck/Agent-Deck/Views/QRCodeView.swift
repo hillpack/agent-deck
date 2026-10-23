@@ -12,6 +12,7 @@ import AppKit
 /// View displaying QR code for mobile PWA access
 /// Tasks: T058-T060 - QR display, URL text, copy functionality
 struct QRCodeView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var qrImage: NSImage?
     @State private var localURL: String?
     @State private var errorMessage: String?
@@ -24,28 +25,31 @@ struct QRCodeView: View {
     }
 
     var body: some View {
-        VStack(spacing: 20) {
-            // Header
+        VStack(spacing: 16) {
+            // Header with close button
             headerView
 
             Divider()
 
-            // Main content
-            if let error = errorMessage {
-                errorView(message: error)
-            } else if let qrImage = qrImage, let url = localURL {
-                successView(qrImage: qrImage, url: url)
-            } else {
-                loadingView
+            // Main content (scrollable if needed)
+            ScrollView {
+                if let error = errorMessage {
+                    errorView(message: error)
+                } else if let qrImage = qrImage, let url = localURL {
+                    successView(qrImage: qrImage, url: url)
+                } else {
+                    loadingView
+                }
             }
 
             Divider()
 
-            // Footer with refresh button
+            // Footer with buttons
             footerView
         }
         .padding()
-        .frame(width: 400, height: 500)
+        .frame(width: 380)
+        .frame(minHeight: 400, maxHeight: 550)
         .onAppear {
             generateQRCode()
         }
@@ -54,33 +58,48 @@ struct QRCodeView: View {
     // MARK: - Header
 
     private var headerView: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "qrcode")
-                .font(.system(size: 32))
-                .foregroundColor(.accentColor)
+        HStack {
+            Spacer()
 
-            Text("Mobile Interface")
-                .font(.title2)
-                .fontWeight(.semibold)
+            VStack(spacing: 8) {
+                Image(systemName: "qrcode")
+                    .font(.system(size: 28))
+                    .foregroundColor(.accentColor)
 
-            Text("Scan to access Agent Deck from your phone")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+                Text("Mobile Interface")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+
+                Text("Scan to access Agent Deck from your phone")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            Spacer()
+        }
+        .overlay(alignment: .topTrailing) {
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Close")
         }
     }
 
     // MARK: - Success View
 
     private func successView(qrImage: NSImage, url: String) -> some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             // QR Code image
             // Task: T058 - display QR code image
             Image(nsImage: qrImage)
                 .interpolation(.none)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 250, height: 250)
+                .frame(width: 200, height: 200)
                 .background(Color.white)
                 .cornerRadius(8)
                 .shadow(radius: 4)
@@ -229,6 +248,12 @@ struct QRCodeView: View {
             .buttonStyle(.plain)
             .font(.caption)
             .help("Refresh QR code if your IP address changed")
+
+            // Done button
+            Button("Done") {
+                dismiss()
+            }
+            .keyboardShortcut(.defaultAction)
         }
     }
 

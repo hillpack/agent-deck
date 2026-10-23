@@ -105,14 +105,15 @@ struct AgentInstance: Identifiable, Codable {
     }
 
     /// Create dictionary representation for WebSocket messaging
+    /// Field names match TypeScript shared-types/src/agent.ts
     func toDictionary() -> [String: Any] {
         var dict: [String: Any] = [
             "id": id.uuidString,
             "pid": Int(pid),
             "agentType": agentType,
-            "workingDirectory": workingDirectory,
+            "cwd": workingDirectory,  // TypeScript expects "cwd"
             "status": status.rawValue,
-            "lastActivityTimestamp": ISO8601DateFormatter().string(from: lastActivityTimestamp)
+            "lastActivity": ISO8601DateFormatter().string(from: lastActivityTimestamp)  // TypeScript expects "lastActivity"
         ]
 
         // Optional basic fields
@@ -121,7 +122,7 @@ struct AgentInstance: Identifiable, Codable {
         }
 
         if let window = windowIdentifier {
-            dict["windowIdentifier"] = window
+            dict["windowId"] = window  // TypeScript expects "windowId"
         }
 
         if let branch = gitBranch {
@@ -130,7 +131,7 @@ struct AgentInstance: Identifiable, Codable {
 
         // Rich transcript data fields
         if let model = modelName {
-            dict["modelName"] = model
+            dict["model"] = model  // TypeScript expects "model"
         }
 
         if let taskDesc = currentTaskDescription {
@@ -143,7 +144,7 @@ struct AgentInstance: Identifiable, Codable {
 
         // Subagents array
         if !activeSubagents.isEmpty {
-            dict["activeSubagents"] = activeSubagents.map { $0.toDictionary() }
+            dict["subagents"] = activeSubagents.map { $0.toDictionary() }  // TypeScript expects "subagents"
         }
 
         // Todos array

@@ -295,11 +295,10 @@ rm -rf ~/Library/Preferences/com.agentdeck.Agent-Deck.plist
 
 1. **macOS only** - Mac app required (cannot run on Windows/Linux)
 2. **Claude Code only** - Cursor, Windsurf, Aider support coming in Phase 2
-3. **Single instance** - Can only monitor one Claude Code instance (multi-instance in Phase 2)
-4. **Local network only** - Mac and phone must be on same WiFi
-5. **No authentication** - Assumes trusted local network (add auth in Phase 3)
-6. **Monitoring only** - Cannot approve/reject agent actions yet (Phase 5)
-7. **Development via Expo Go only** - App Store/Play Store distribution in Phase 3+
+3. **Local network only** - Mac and phone must be on same WiFi
+4. **No authentication** - Assumes trusted local network (add auth in Phase 3)
+5. **Monitoring only** - Cannot approve/reject agent actions yet (Phase 5)
+6. **Development via Expo Go only** - App Store/Play Store distribution in Phase 3+
 
 **Roadmap:** See [ROADMAP.md](ROADMAP.md) for planned features
 
@@ -307,11 +306,14 @@ rm -rf ~/Library/Preferences/com.agentdeck.Agent-Deck.plist
 
 ## 🛣️ Roadmap
 
-### Phase 1 (MVP) - ✅ Complete
-- Real-time monitoring with rich data parsing
-- Window switching from mobile
-- React Native mobile app (Expo)
-- QR code pairing
+### Phase 1 (MVP) - ✅ Development Complete (92%)
+- Real-time monitoring with rich data parsing (model, branch, todos, subagents)
+- Window switching from mobile (<1s latency)
+- React Native mobile app (~2,160 lines): AgentListScreen, QRScannerScreen, SettingsScreen, ActionsScreen
+- QR code pairing with manual URL fallback
+- Custom Actions UI (stream deck style buttons)
+- Mac release build ready
+- **Remaining**: Manual testing (TEST_CHECKLIST.md), Expo builds (EAS setup)
 
 ### Phase 2 (Next 2-4 weeks)
 - Support for Cursor and Windsurf agents
@@ -390,7 +392,7 @@ cd apps/macos && open Agent-Deck.xcodeproj
 - [Combine](https://developer.apple.com/documentation/combine) (reactive state management)
 - [Network.framework](https://developer.apple.com/documentation/network) (WebSocket server)
 - [expo-keep-awake](https://docs.expo.dev/versions/latest/sdk/keep-awake/) (prevent screen sleep)
-- [expo-barcode-scanner](https://docs.expo.dev/versions/latest/sdk/bar-code-scanner/) (QR code scanning)
+- [expo-camera](https://docs.expo.dev/versions/latest/sdk/camera/) (QR code scanning)
 
 **Inspired by:**
 - [Elgato Stream Deck](https://www.elgato.com/stream-deck) (UX paradigm)

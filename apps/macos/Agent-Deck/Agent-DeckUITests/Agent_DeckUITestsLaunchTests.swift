@@ -1,6 +1,6 @@
 //
 //  Agent_DeckUITestsLaunchTests.swift
-//  Agent-DeckUITests
+//  AgentDeckUITests
 //
 //  Created by Tony Hill on 11/2/25.
 //

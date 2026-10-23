@@ -417,10 +417,10 @@ class ProcessMonitor: ObservableObject {
 
     /// Read task information from activity files written by Claude Code hooks
     /// Activity files are written by ~/.claude/agent-deck-monitor.py (hook script)
-    /// Location: ~/.agent-deck/activity-{session_id}.json
+    /// Location: ~/.agentdeck/activity-{session_id}.json
     /// Matches instances by comparing working directory (cwd)
     private func readTaskFromCacheFiles(pid: pid_t, workingDir: String) -> String? {
-        let cacheDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".agent-deck")
+        let cacheDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".agentdeck")
 
         // Check if cache directory exists
         guard FileManager.default.fileExists(atPath: cacheDir.path) else {

@@ -16,6 +16,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.2] - 2025-01-10
+
+### Fixed
+- **PWA Field Mapping:** Fixed mismatch between Swift server and JavaScript client field names
+  - Timestamp: Server sends `lastActivity`, PWA expected `lastActivityTimestamp` → Now handles both
+  - Model: Server sends `model`, PWA expected `modelName` → Now handles both
+  - Subagents: Server sends `subagents`, PWA expected `activeSubagents` → Now handles both
+  - Fixed "NaNd ago" timestamp display caused by undefined value handling
+
+### Technical
+- Added defensive fallback pattern in PWA: `serverField || clientField` for backward compatibility
+- Enhanced `formatTimestamp()` to handle undefined, null, and invalid Date values
+- Enhanced `shortenModelName()` to handle undefined input gracefully
+- Timestamp now returns "Just now" for missing/invalid values instead of "NaNd ago"
+
+---
+
 ## [0.1.1] - 2025-01-07
 
 ### Fixed
@@ -103,6 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
+- **0.1.2** (2025-01-10) - PWA field mapping fixes, robust null handling
+- **0.1.1** (2025-01-07) - Process detection fixes, last statement display
 - **0.1.0** (2025-01-06) - MVP release with core monitoring and window switching
 - **[Future]** - Cursor/Windsurf support, custom actions, configuration UI
 

@@ -126,7 +126,7 @@ enum QRGenerator {
 
     // MARK: - URL Generation
 
-    /// Generate local network URL for mobile access
+    /// Generate local network URL for mobile access (HTTP)
     /// Task: T057 - generate URL containing local IP and port
     /// - Parameter port: HTTP server port (default: 3000)
     /// - Returns: Complete URL string, or nil if no IP available
@@ -138,12 +138,26 @@ enum QRGenerator {
         return "http://\(ipAddress):\(port)"
     }
 
+    /// Generate WebSocket URL for mobile app access
+    /// - Parameter httpPort: HTTP server port (WebSocket runs on httpPort + 1)
+    /// - Returns: WebSocket URL string, or nil if no IP available
+    static func generateWebSocketURL(httpPort: UInt16 = 3000) -> String? {
+        guard let ipAddress = getLocalIPAddress() else {
+            return nil
+        }
+        // WebSocket server runs on HTTP port + 1
+        let wsPort = httpPort + 1
+        return "ws://\(ipAddress):\(wsPort)"
+    }
+
     /// Generate QR code for local network access
     /// Convenience method combining URL generation and QR creation
-    /// - Parameter port: HTTP server port (default: 3000)
+    /// - Parameter port: HTTP server port (WebSocket runs on port + 1)
     /// - Returns: Tuple of (QR code image, URL string), or nil if generation failed
+    /// Note: Generates WebSocket URL (ws://) for React Native mobile app compatibility
     static func generateMobileAccessQR(port: UInt16 = 3000) -> (image: NSImage, url: String)? {
-        guard let url = generateLocalURL(port: port) else {
+        // Generate WebSocket URL for React Native mobile app
+        guard let url = generateWebSocketURL(httpPort: port) else {
             Logger.error("Cannot generate QR: no local IP address", log: Logger.network)
             return nil
         }

@@ -1,5 +1,5 @@
 # Agent Deck Default Configuration
-# Location: ~/.agent-deck/config.yaml (auto-created on first launch)
+# Location: ~/.agentdeck/config.yaml (auto-created on first launch)
 # Spec: plan.md Configuration Storage section
 
 server:

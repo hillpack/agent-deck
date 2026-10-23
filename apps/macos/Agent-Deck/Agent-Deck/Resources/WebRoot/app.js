@@ -186,14 +186,25 @@ class AgentDeckClient {
     }
 
     // Handle update message - Task: T036
+    // Supports both array format (data.instances) and single instance format (data.instanceId)
     handleUpdate(data) {
-        const instance = this.instances.get(data.instanceId);
-        if (instance) {
-            instance.status = data.status;
-            instance.currentTask = data.currentTask;
-            instance.lastActivityTimestamp = data.timestamp;
-
+        if (data.instances && Array.isArray(data.instances)) {
+            // Server sends array format - handle like state_update
+            console.log('Update received with', data.instances.length, 'instances');
+            this.instances.clear();
+            data.instances.forEach(instance => {
+                this.instances.set(instance.id, instance);
+            });
             this.renderAgentList();
+        } else if (data.instanceId) {
+            // Single instance update format
+            const instance = this.instances.get(data.instanceId);
+            if (instance) {
+                instance.status = data.status;
+                instance.currentTask = data.currentTask;
+                instance.lastActivityTimestamp = data.timestamp;
+                this.renderAgentList();
+            }
         }
     }
 
@@ -263,7 +274,8 @@ class AgentDeckClient {
         // Agent info (type + working directory on one line)
         const infoDiv = document.createElement('div');
         infoDiv.className = 'card-info';
-        infoDiv.innerHTML = `<span class="card-type">${instance.agentType}</span> <span class="card-separator">•</span> <span class="card-working-dir">${instance.workingDirectory}</span>`;
+        const workDir = instance.workingDirectory || instance.cwd || 'Unknown';
+        infoDiv.innerHTML = `<span class="card-type">${instance.agentType}</span> <span class="card-separator">•</span> <span class="card-working-dir">${workDir}</span>`;
 
         // Current task - PROMINENT (what user wants to see)
         const taskDiv = document.createElement('div');
@@ -310,7 +322,9 @@ class AgentDeckClient {
 
         const timestamp = document.createElement('span');
         timestamp.className = 'timestamp-text';
-        timestamp.textContent = this.formatTimestamp(instance.lastActivityTimestamp);
+        // Server sends "lastActivity", handle both field names for robustness
+        const lastActivity = instance.lastActivity || instance.lastActivityTimestamp;
+        timestamp.textContent = this.formatTimestamp(lastActivity);
 
         footerDiv.appendChild(statusDot);
         footerDiv.appendChild(statusText);
@@ -342,7 +356,9 @@ class AgentDeckClient {
 
     // Create active subagents expandable section
     createSubagentsSection(instance) {
-        if (!instance.activeSubagents || instance.activeSubagents.length === 0) {
+        // Server sends "subagents", handle both field names for robustness
+        const subagents = instance.subagents || instance.activeSubagents;
+        if (!subagents || subagents.length === 0) {
             return null;
         }
 
@@ -361,12 +377,12 @@ class AgentDeckClient {
         });
 
         const summary = document.createElement('summary');
-        summary.innerHTML = `🤖 Active Subagents (${instance.activeSubagents.length})`;
+        summary.innerHTML = `🤖 Active Subagents (${subagents.length})`;
 
         const list = document.createElement('ul');
         list.className = 'subagents-list';
 
-        instance.activeSubagents.forEach(subagent => {
+        subagents.forEach(subagent => {
             const item = document.createElement('li');
             item.className = 'subagent-item';
 
@@ -461,11 +477,13 @@ class AgentDeckClient {
 
         const parts = [];
 
-        if (instance.modelName) {
+        // Server sends "model", handle both field names for robustness
+        const modelName = instance.model || instance.modelName;
+        if (modelName) {
             const modelSpan = document.createElement('span');
             modelSpan.className = 'metadata-model';
             // Shorten model name (e.g., "claude-sonnet-4-5-20250929" → "Sonnet 4.5")
-            const shortModel = this.shortenModelName(instance.modelName);
+            const shortModel = this.shortenModelName(modelName);
             modelSpan.textContent = shortModel;
             parts.push(modelSpan);
         }
@@ -478,9 +496,10 @@ class AgentDeckClient {
         }
 
         // Add working directory (basename only)
+        const workingDir = instance.workingDirectory || instance.cwd || 'Unknown';
         const dirSpan = document.createElement('span');
         dirSpan.className = 'metadata-directory';
-        const dirName = instance.workingDirectory.split('/').pop() || instance.workingDirectory;
+        const dirName = workingDir.split('/').pop() || workingDir;
         dirSpan.textContent = dirName;
         parts.push(dirSpan);
 
@@ -500,18 +519,26 @@ class AgentDeckClient {
 
     // Shorten model name for display
     shortenModelName(modelName) {
-        // Convert "claude-sonnet-4-5-20250929" to "Sonnet 4.5"
-        if (modelName.includes('sonnet')) {
-            const match = modelName.match(/sonnet-(\d)-(\d)/);
+        // Handle undefined or null input
+        if (!modelName) {
+            return 'Unknown';
+        }
+
+        // Normalize to lowercase for matching
+        const lowerName = modelName.toLowerCase();
+
+        // Convert "claude-sonnet-4-5-20250929" or "Sonnet 4.5" to "Sonnet 4.5"
+        if (lowerName.includes('sonnet')) {
+            const match = modelName.match(/sonnet[- ]?(\d)[- .]?(\d)/i);
             if (match) {
                 return `Sonnet ${match[1]}.${match[2]}`;
             }
             return 'Sonnet';
         }
-        if (modelName.includes('opus')) {
+        if (lowerName.includes('opus')) {
             return 'Opus';
         }
-        if (modelName.includes('haiku')) {
+        if (lowerName.includes('haiku')) {
             return 'Haiku';
         }
         return modelName.substring(0, 20); // Fallback: truncate
@@ -688,9 +715,25 @@ class AgentDeckClient {
 
     // Format timestamp as relative time
     formatTimestamp(timestamp) {
+        // Handle missing or undefined timestamp
+        if (!timestamp) {
+            return 'Just now';
+        }
+
         const date = new Date(timestamp);
+
+        // Handle invalid date (e.g., from undefined or malformed input)
+        if (isNaN(date.getTime())) {
+            return 'Just now';
+        }
+
         const now = new Date();
         const seconds = Math.floor((now - date) / 1000);
+
+        // Handle future dates or negative values
+        if (seconds < 0) {
+            return 'Just now';
+        }
 
         if (seconds < 60) return `${seconds}s ago`;
         if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;

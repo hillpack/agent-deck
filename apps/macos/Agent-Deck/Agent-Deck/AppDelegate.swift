@@ -9,21 +9,17 @@ import Cocoa
 import SwiftUI
 import Combine
 
-/// AppDelegate for menubar app lifecycle management
-/// Spec: plan.md AppDelegate section, tasks.md T015-T016
-/// Phase 3: Integrated with ProcessMonitor, WebSocketServer, HTTPServer
-class AppDelegate: NSObject, NSApplicationDelegate {
-    var statusItem: NSStatusItem?
-    var popover: NSPopover?
-
+/// AppDelegate for dock app lifecycle management
+/// Converted from menubar app to standard dock app (Nov 2025)
+class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     // Services - Phase 3 (User Story 1)
-    var processMonitor: ProcessMonitor?
-    var webSocketServer: WebSocketServer?
-    var httpServer: HTTPServer?
-    var windowManager: WindowManager? // Phase 4 (User Story 2)
+    @Published var processMonitor: ProcessMonitor?
+    @Published var webSocketServer: WebSocketServer?
+    @Published var httpServer: HTTPServer?
+    @Published var windowManager: WindowManager? // Phase 4 (User Story 2)
 
     // Configuration
-    var configuration: Configuration?
+    @Published var configuration: Configuration?
 
     // Combine subscriptions for observing ProcessMonitor changes
     private var cancellables = Set<AnyCancellable>()
@@ -32,15 +28,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSLog("🚀 Agent Deck launching...")
         Logger.info("Agent Deck launching...")
 
-        // Hide dock icon (menubar-only app) - configured in Info.plist with LSUIElement
-        NSApp.setActivationPolicy(.accessory)
-
         // First-launch detection (Task: T074)
         handleFirstLaunch()
-
-        // Create menubar status item
-        setupStatusBar()
-        NSLog("✅ Status bar setup complete")
 
         // Load configuration
         let config = loadConfiguration()
@@ -72,45 +61,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSLog("✅ Agent Deck terminated cleanly")
     }
 
-    /// Setup menubar status item
-    private func setupStatusBar() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-        if let button = statusItem?.button {
-            // Set menubar icon (will use SF Symbol or custom icon)
-            button.image = NSImage(systemSymbolName: "cpu", accessibilityDescription: "Agent Deck")
-            button.action = #selector(togglePopover)
-            button.target = self
-
-            Logger.info("Menubar icon created", log: Logger.general)
-        }
-    }
-
-    /// Toggle popover visibility
-    @objc private func togglePopover() {
-        if let popover = popover, popover.isShown {
-            popover.performClose(nil)
-        } else {
-            showPopover()
-        }
-    }
-
-    /// Show menubar dropdown popover
-    private func showPopover() {
-        guard let button = statusItem?.button else { return }
-
-        if popover == nil {
-            popover = NSPopover()
-            popover?.contentSize = NSSize(width: 300, height: 400)
-            popover?.behavior = .transient
-
-            // Phase 3: Use MenuBarView with ProcessMonitor, WindowManager, and Configuration
-            if let monitor = processMonitor, let winManager = windowManager, let config = configuration {
-                popover?.contentViewController = NSHostingController(rootView: MenuBarView(processMonitor: monitor, windowManager: winManager, configuration: config))
-            }
-        }
-
-        popover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        // Keep running even if window is closed (like a traditional dock app)
+        // User can quit via Cmd+Q or File > Quit
+        return false
     }
 
     /// Load configuration on launch
@@ -196,9 +150,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 Logger.info("ProcessMonitor instances changed, broadcasting to \(wsServer.connections.count) clients", log: Logger.monitoring)
 
                 // Broadcast full state update
+                // Matches TypeScript shared-types/src/websocket.ts StatusUpdateMessage
                 let message: [String: Any] = [
-                    "type": "state_update",
-                    "timestamp": ISO8601DateFormatter().string(from: Date()),
+                    "type": "update",  // TypeScript expects "update", not "state_update"
                     "instances": instances.map { $0.toDictionary() }
                 ]
 
@@ -242,10 +196,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         To get started:
         1. Grant Accessibility permissions when prompted
-        2. Open the menubar icon to view agent status
+        2. The app will show detected agent instances
         3. Scan the QR code with your phone to access the mobile interface
 
-        Configuration file created at: ~/.agent-deck/config.yaml
+        Configuration file created at: ~/.agentdeck/config.yaml
         """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Get Started")
